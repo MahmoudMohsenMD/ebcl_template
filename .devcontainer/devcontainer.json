@@ -1,0 +1,41 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+	"name": "EB corbos Linux SDK 1.3",
+	// DO NOT MODIFY THE TAG!!!
+	// The local container tag and used upstream container version is defined in .env.
+	"image": "linux.elektrobit.com/ebcl/sdk:local",
+	// This script will get the container and tag it with the local container tag. 
+	"initializeCommand": "${PWD}/init_workspace",
+	"postCreateCommand": "${PWD}/init_container",
+	"postStartCommand": "${PWD}/enter_container",
+	"customizations": {
+		"vscode": {
+			"settings": {
+                "cmake.options.statusBarVisibility": "visible",
+                "cmake.configureOnOpen": false
+			},
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack@1.3.0"
+			]
+		}
+	},
+	"remoteUser": "ebcl",
+	"privileged": true,
+	"mounts": [
+		{
+			// Local storage for kiwi build VM images
+			"source": "ebcl-build-boxes",
+			"target": "/home/ebcl/.kiwi_boxes",
+			"type": "volume"
+		},
+		{
+			// Bind-mount the /dev folder, to get access to losetup devices
+			"source": "/dev",
+			"target": "/dev",
+			"type": "bind"
+		}
+	],
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+	"workspaceFolder": "/workspace"
+}
