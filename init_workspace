@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# This script is exectued in the host environment,
+# before the VS Code dev-container build.
+
+CONTAINER_TOOL="docker"
+CONTAINER_TAG=$(cat .devcontainer/devcontainer.json | grep "linux.elektrobit.com" | awk -F ":" '{print $3}' | awk -F "\"" '{print $1}')
+
+echo "Setting EBcL workspace up..."
+echo "Using EBcL container ${CONTAINER_TAG}."
+
+# Create tools folder
+mkdir -p tools
+
+# Create cache folders
+mkdir -p state/cache
+mkdir -p state/apt
+
+source .env
+
+# Copy user config
+if [ -d "${HOME}/.ebcl_config" ]; then
+    echo "Copying user config..."
+    rm -rf tools/user_config
+    mkdir -p tools/user_config
+    cp -R ~/.ebcl_config/* tools/user_config
+    cp -R ~/.ebcl_config/.env tools/user_config
+else
+    echo "No user config found. You can provide your own init scripts in ~/.ebcl_config"
+fi
+
+# source user env, if it exists
+ENV="tools/user_config/.env"
+if [ -f "$ENV" ]; then
+    echo "Sourcing '${ENV}'..."    
+    source $ENV
+fi
+
+# Test if docker image is available
+if [ -z "$(docker images -q "linux.elektrobit.com/ebcl/sdk:${CONTAINER_TAG}")" ]; then
+    if [ -z "${EBCL_CONTAINER_URL}" ]; then
+        echo "No container download url found! Please ensure the dev container image is available."
+        exit 1
+    else
+        # Download and import the image
+        docker import "${EBCL_CONTAINER_URL}/ebcl_dev_container_${CONTAINER_TAG}.tar.xz" "linux.elektrobit.com/ebcl/sdk:${CONTAINER_TAG}"
+    fi
+else
+    echo "Dev container image "linux.elektrobit.com/ebcl/sdk:${CONTAINER_TAG}" is available."
+fi
+
+# Copy SSH keys
+if [ ${COPY_SSH} -eq 1 ]; then
+    echo "Copying SSH keys from host..."
+    if [ -d ${HOME}/.ssh ]; then
+        echo "Copying SSH folder to tools..."
+        rm -rf tools/.ssh
+        mkdir -p tools/.ssh
+        cp -R ${HOME}/.ssh/* tools/.ssh/
+        echo "Copied keys:"
+        ls -lah tools/.ssh/*
+    else
+        echo "No .ssh folder found!"
+    fi
+else
+    echo "Not copying SSH keys from host."
+fi
