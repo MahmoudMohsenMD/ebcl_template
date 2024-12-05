@@ -1,0 +1,19 @@
+version: '3'
+
+vars:
+  arch: 'aarch64'
+  partition_layout: ../image.yaml
+  root_filesystem_spec: root.yaml
+
+includes:
+  rpi:
+    taskfile: ../../raspberry.yml
+    flatten: true
+
+tasks:
+  default:
+    desc: Build raspberry pi 4 image
+    cmds:
+      - task: build_root_base
+      - task: build_rootfs
+      - task: build_image
